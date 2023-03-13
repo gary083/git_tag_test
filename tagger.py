@@ -1,36 +1,24 @@
-import os
-import logging
+import git  # 3.1.30
 import subprocess
-from typing import List, Union
-
-# 3.1.30
-import git
-
-repo = git.Repo(subprocess.getoutput('git rev-parse --show-toplevel'))
 
 
-def get_tags(repo) -> List[str]:
-    """Get list of all tags for package"""
+def get_tags(repo):
     try:
-        return repo.git.tag(l=f'1.*').split('\n')
+        return repo.git.tag(l='1.*').split('\n')
     except (git.NoSuchPathError, git.InvalidGitRepositoryError):
-        # In case a git repo is not found
         return []
 
 
 def get_head_tag(repo):
-    HeadTag = None
-    for tagRef in repo.tags:
-        if tagRef.commit == repo.head.commit and tagRef.tag != None:
-            HeadTag = tagRef.tag.tag
-    return HeadTag
+    head_tag = None
+    for tag_ref in repo.tags:
+        if tag_ref.commit == repo.head.commit and tag_ref.tag is not None:
+            head_tag = tag_ref.tag.tag
+    return head_tag
 
 
 def check_head(repo):
     return any([tag.commit == repo.head.commit for tag in repo.tags])
-
-
-print(check_head(repo))
 
 
 def get_latest_tag(repo):
@@ -41,6 +29,8 @@ def parse_tag(tag):
     return map(int, tag.split('.'))
 
 
+repo = git.Repo(subprocess.getoutput('git rev-parse --show-toplevel'))
+print(check_head(repo))
 print(get_head_tag(repo))
 print(get_latest_tag(repo))
 
@@ -64,12 +54,12 @@ next_tag = get_next_tag(repo)
 
 
 def add_tag(repo, tag):
-    new_tag = repo.create_tag(tag, message='Automatic tag "{0}"'.format(tag))
-    return new_tag
+    return repo.create_tag(tag, message=f'Automatic tag "{tag}"')
 
 
 def push_tag(repo, tag):
     repo.remote('origin').push(tag)
+
 
 new_tag = add_tag(repo, next_tag)
 push_tag(repo, new_tag)
